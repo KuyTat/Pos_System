@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Management</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+
+    <style>
+      body {
+        background: #f4f6f9;
+        height: 100vh;
+      }
+
+      .header {
+        background: #212529;
+        color: white;
+        padding: 15px;
+      }
+
+      .main {
+        height: calc(100vh - 70px);
+      }
+
+      .card {
+        height: 100%;
+      }
+
+      .table img {
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <h3>Product Management</h3>
+    </div>
+
+    <div class="container-fluid main">
+      <div class="row h-auto p-3">
+        <!-- Product Form -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header header text-center fw-bold">
+              Add / Update Product
+            </div>
+
+            <div class="card-body">
+              <form>
+                <div class="mb-3">
+                  <label class="form-label" for="product_name"
+                    >Product Name</label
+                  >
+                  <input type="text" class="form-control" id="product_name" />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="price">Price</label>
+                  <input type="number" class="form-control" id="price" />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="category">Category</label>
+                  <select class="form-control" id="category">
+                    <option>Drink</option>
+                    <option>Food</option>
+                    <option>Snack</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="product_image"
+                    >Product Image</label
+                  >
+                  <input id="product_image" type="Text" class="form-control" />
+                </div>
+
+                <button id="saveProduct" class="btn btn-primary w-100">
+                  Save Product
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Table -->
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header header text-center fw-bold">
+              Product List
+            </div>
+
+            <div class="card-body table-responsive">
+              <table
+                class="table table-bordered table-hover"
+                id="product_table">
+                <thead class="table-dark">
+                  <tr class="text-center align-middle">
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let product_name = document.getElementById("product_name");
+      let price = document.getElementById("price");
+      let category = document.getElementById("category");
+      let product_image = document.getElementById("product_image");
+      let saveProduct = document.getElementById("saveProduct");
+      //   let product_table = document.getElementById("product_table").getElementsByTagName("tbody")[0];
+      let product_table = document.querySelector("#product_table tbody");
+      let products = JSON.parse(localStorage.getItem("products")) || [];
+      let globle_index = -1;
+      render_table_product();
+      saveProduct.addEventListener("click", function (e) {
+        // e.preventDefault();
+        let randomId = Math.floor(Math.random() * 1000);
+        let name_value = product_name.value;
+        let price_value = price.value;
+        let category_value = category.value;
+        let image_value = product_image.value;
+        if (globle_index === -1) {
+          products.push({
+            id: randomId,
+            name: name_value,
+            price: price_value,
+            category: category_value,
+            image: image_value,
+          });
+        } else {
+          products[globle_index] = {
+            id: randomId,
+            name: name_value,
+            price: price_value,
+            category: category_value,
+            image: image_value,
+          };
+        }
+
+        localStorage.setItem("products", JSON.stringify(products));
+        render_table_product();
+        clearForm();
+      });
+      function clearForm() {
+        product_name.value = "";
+        price.value = "";
+        category.value = "Drink";
+        product_image.value = "";
+      }
+      function render_table_product() {
+        let products = JSON.parse(localStorage.getItem("products")) || [];
+        product_table.innerHTML = "";
+        for (let product of products) {
+          let tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="text-center align-middle">${product.id}</td>
+            <td class="text-center align-middle">
+              <img  src="${product.image}" width="40" />
+            </td>
+            <td class="text-center align-middle">${product.name}</td>
+            <td class="text-center align-middle">${product.category}</td>
+            <td class="text-center align-middle">${product.price}</td>
+            <td class="text-center align-middle">
+              <button class="btn btn-warning btn-sm" onclick="edit(${product.id})">Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="delete_product(${product.id})">Delete</button>
+            </td>
+          `;
+          product_table.appendChild(tr);
+        }
+      }
+      function delete_product(product_id) {
+        let index = products.findIndex((p) => p.id === product_id);
+        Swal.fire({
+          title: "Are you sure?",
+          text: "You won't be able to revert this!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Yes, delete it!",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            products.splice(index, 1);
+            localStorage.setItem("products", JSON.stringify(products));
+            render_table_product();
+            Swal.fire({
+              title: "Deleted!",
+              text: "Your file has been deleted.",
+              icon: "success",
+            });
+          }
+        });
+      }
+      function edit(product_id) {
+        let index = products.findIndex((p) => p.id === product_id);
+        if (index !== -1) {
+          globle_index = index;
+        }
+        product_name.value = products[index].name;
+        price.value = products[index].price;
+        category.value = products[index].category;
+        product_image.value = products[index].image;
+        saveProduct.innerText = "Update Product";
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </body>
+</html>
