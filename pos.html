@@ -64,60 +64,7 @@
         <div class="col-md-6 p-4">
           <h3 class="mb-4">Products</h3>
 
-          <div class="row" id="product_card_container">
-            <!-- <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <img
-                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3M-xR4PTf-oldWP8s2UWBCDxtZatNqXs1NA&s"
-                  class="img-fluid mb-2"
-                  style="height: 120px; object-fit: contain" />
-
-                <h5>Coca Cola</h5>
-                <p>$1.00</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div> -->
-
-            <!-- <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <h5>Coca Cola</h5>
-                <p>$1.00</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <h5>Pepsi</h5>
-                <p>$1.00</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <h5>Burger</h5>
-                <p>$2.50</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <h5>Pizza</h5>
-                <p>$3.50</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <h5>Chips</h5>
-                <p>$1.20</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div> -->
-          </div>
+          <div class="row" id="product_card_container"></div>
         </div>
 
         <!-- Cart -->
@@ -130,22 +77,11 @@
                 <th>Item</th>
                 <th>Qty</th>
                 <th>Price</th>
+                <th>Action</th>
               </tr>
             </thead>
 
-            <tbody>
-              <tr>
-                <td>Coca Cola</td>
-                <td>1</td>
-                <td>$1.00</td>
-              </tr>
-
-              <tr>
-                <td>Burger</td>
-                <td>1</td>
-                <td>$2.50</td>
-              </tr>
-            </tbody>
+            <tbody></tbody>
           </table>
 
           <hr />
@@ -155,41 +91,153 @@
             <span>$3.50</span>
           </div>
 
-          <button class="btn btn-success w-100 mt-4">Checkout</button>
+          <button class="btn btn-success w-100 mt-4" id="checkout">
+            Checkout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA QR Modal -->
+    <div class="modal fade" id="qrModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-3">
+          <img
+            src="aba-qr.png"
+            class="img-fluid rounded"
+            style="max-height: auto" />
+
+          <button class="btn btn-success mt-2" onclick="finishPayment()">
+            Payment Done
+          </button>
+
+          <button class="btn btn-secondary mt-2" data-bs-dismiss="modal">
+            Close
+          </button>
         </div>
       </div>
     </div>
     <script>
       let products = JSON.parse(localStorage.getItem("products")) || [];
+      let product_order =
+        JSON.parse(localStorage.getItem("product_order")) || [];
       let product_card_container = document.getElementById(
         "product_card_container",
       );
       console.log(products);
       render_cart_product();
+      renderCart();
       function render_cart_product() {
         let products = JSON.parse(localStorage.getItem("products")) || [];
         let cart_string = "";
         for (let product of products) {
           cart_string += `
-                 <tr>
-                   <div class="col-md-4 mb-3">
-              <div class="card product-card text-center p-3">
-                <img
-                  src="${product.image}"
-                  class="img-fluid mb-2"
-                  style="height: 120px; object-fit: contain" />
+                     <tr>
+                       <div class="col-md-4 mb-3">
+                  <div class="card product-card text-center p-3">
+                    <img
+                      src="${product.image}"
+                      class="img-fluid mb-2"
+                      style="height: 120px; object-fit: contain" />
 
-                <h5>${product.name}</h5>
-                <p>$${product.price}</p>
-                <button class="btn btn-primary btn-sm">Add</button>
-              </div>
-            </div>
-                 </tr>
-               `;
+                    <h5>${product.name}</h5>
+                    <p>$${product.price}</p>
+                    <button class="btn btn-primary btn-sm" onclick="addToCart('${product.id}')">Add</button>
+                  </div>
+                </div>
+                     </tr>
+                   `;
         }
         document.querySelector("#product_card_container").innerHTML =
           cart_string;
       }
+
+      function addToCart(id) {
+        let product = products.find((p) => p.id == id);
+
+        let item = product_order.find((p) => p.id == id);
+
+        if (item) {
+          item.qty += 1; // increase qty
+        } else {
+          product.qty = 1;
+          product_order.push(product);
+        }
+
+        localStorage.setItem("product_order", JSON.stringify(product_order));
+        renderCart();
+      }
+      function renderCart() {
+        let cart = "";
+        let total = 0;
+
+        for (let item of product_order) {
+          total += item.price * item.qty;
+
+          cart += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.qty}</td>
+        <td>$${item.price * item.qty}</td>
+              <td class=" align-middle">
+              <button class="btn btn-warning btn-sm" onclick="plus(${item.id})">➕</button>
+              <button class="btn btn-danger btn-sm" onclick="minus(${item.id})">➖</button>
+            </td>
+      </tr>
+    `;
+        }
+
+        document.querySelector("tbody").innerHTML = cart;
+        document.querySelector(".total span:last-child").innerText =
+          "$" + total;
+      }
+      function plus(id) {
+        let item = product_order.find((p) => p.id == id);
+
+        if (item) {
+          item.qty += 1;
+        }
+
+        localStorage.setItem("product_order", JSON.stringify(product_order));
+        renderCart();
+      }
+      function minus(id) {
+        let item = product_order.find((p) => p.id == id);
+
+        if (item && item.qty > 1) {
+          item.qty -= 1;
+        } else {
+          product_order = product_order.filter((p) => p.id != id);
+        }
+
+        localStorage.setItem("product_order", JSON.stringify(product_order));
+        renderCart();
+      }
+
+      document
+        .getElementById("checkout")
+        .addEventListener("click", function () {
+          if (product_order.length === 0) {
+            alert("Cart is empty!");
+            return;
+          }
+
+          let modal = new bootstrap.Modal(document.getElementById("qrModal"));
+          modal.show();
+        });
+      function finishPayment() {
+        product_order = [];
+        localStorage.removeItem("product_order");
+        renderCart();
+
+        let modal = bootstrap.Modal.getInstance(
+          document.getElementById("qrModal"),
+        );
+        modal.hide();
+
+        alert("Payment Successful");
+      }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
